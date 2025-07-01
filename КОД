@@ -1,140 +1,195 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <conio.h>
-#include <string.h>  
 
-// Функция для безопасного ввода целого числа
-int input_int(const char* prompt) {
-    int value;
-    char buffer[100];
-    
-    while(1) {
-        printf("%s", prompt);
-        if(fgets(buffer, sizeof(buffer), stdin) == NULL) {
-            printf("Ошибка ввода!\n");
-            continue;
-        }
-        
-        // Проверяем, что введено целое число и нет мусора после числа
-        if(sscanf(buffer, "%d", &value) == 1) {
-            // Проверяем, что в строке нет других символов кроме числа
-            char *endptr;
-            strtol(buffer, &endptr, 10);
-            if(*endptr == '\n' || *endptr == '\0') {
-                return value;
+#define MAX_SIZE 500000  // Уменьшено с 1,000,000 до 500,000
+
+void create_data_file(const char *fname, int elements, int low, int high) {
+    FILE *fp = fopen(fname, "w");
+    if (!fp) {
+        fprintf(stderr, "Не удалось создать файл %s\n", fname);
+        return;
+    }
+
+    srand(time(0));
+    for (int i = 0; i < elements; i++) {
+        int val = low + rand() % (high - low + 1);
+        fprintf(fp, "%d\n", val);
+    }
+    fclose(fp);
+    printf("Создан файл %s с %d числами от %d до %d\n", fname, elements, low, high);
+}
+
+int* load_data(const char *fname, int *elements_count) {
+    FILE *fp = fopen(fname, "r");
+    if (!fp) {
+        fprintf(stderr, "Файл %s не найден\n", fname);
+        return NULL;
+    }
+
+    int *data = malloc(MAX_SIZE * sizeof(int));
+    if (!data) {
+        fprintf(stderr, "Ошибка выделения памяти\n");
+        fclose(fp);
+        return NULL;
+    }
+
+    *elements_count = 0;
+    while (*elements_count < MAX_SIZE && fscanf(fp, "%d", &data[*elements_count]) == 1) {
+        (*elements_count)++;
+    }
+    fclose(fp);
+    return data;
+}
+
+void asc_sort(int *arr, int n, int *swaps) {
+    for (int i = 0; i < n - 1; i++) {
+        int min_pos = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[min_pos]) {
+                min_pos = j;
             }
         }
-        
-        printf("Ошибка! Введите целое число: ");
+        if (min_pos != i) {
+            int temp = arr[i];
+            arr[i] = arr[min_pos];
+            arr[min_pos] = temp;
+            (*swaps)++;
+        }
     }
 }
 
-int main() {
-    while(1) {
-        FILE *f;
-        int *mas = NULL;
-        int n, a, b, i, j, temp, choice;
-        clock_t start, end;
-        
-        printf("\n\nНажмите ESC для выхода или любую другую клавишу для продолжения...\n");
-        
-        // Проверка нажатия ESC
-        if(getch() == 27) {
-            printf("\nВыход из программы...\n");
-            break;
-        }
-        
-        // Ввод количества чисел с проверкой
-        n = input_int("\nСколько чисел сгенерировать? ");
-        while(n <= 0) {
-            printf("Число должно быть больше нуля! ");
-            n = input_int("Попробуйте снова: ");
-        }
-        
-        mas = (int*)malloc(n * sizeof(int));
-        if(mas == NULL) {
-            printf("Не хватило памяти!\n");
-            return 1;
-        }
-        
-        // Вводим диапазон с проверками
-        a = input_int("Минимальное число: ");
-        
-        b = input_int("Максимальное число: ");
-        while(b < a) {
-            printf("Максимум должен быть больше минимума! ");
-            b = input_int("Введите снова: ");
-        }
-        
-        // Генерируем числа
-        srand(time(0));
-        for(i = 0; i < n; i++) {
-            mas[i] = rand() % (b - a + 1) + a;
-        }
-        
-        // Сохраняем несортированный массив
-        f = fopen("unsorted.txt", "w");
-        if(f == NULL) {
-            printf("Не получилось создать файл!\n");
-            free(mas);
-            return 1;
-        }
-        for(i = 0; i < n; i++) {
-            fprintf(f, "%d\n", mas[i]);
-        }
-        fclose(f);
-        printf("Числа записаны в unsorted.txt\n");
-        
-        // Выбираем сортировку с проверкой
-        printf("\nКак сортировать?\n");
-        printf("1 - По возрастанию\n");
-        printf("2 - По убыванию\n");
-        
-        choice = input_int("Ваш выбор: ");
-        while(choice != 1 && choice != 2) {
-            printf("Ошибка! Введите 1 или 2: ");
-            choice = input_int("");
-        }
-        
-        // Сортировка выбором
-        start = clock();
-        for(i = 0; i < n - 1; i++) {
-            int extreme_index = i;
-            
-            for(j = i + 1; j < n; j++) {
-                if((choice == 1 && mas[j] < mas[extreme_index]) || 
-                   (choice == 2 && mas[j] > mas[extreme_index])) {
-                    extreme_index = j;
-                }
-            }
-            
-            if(extreme_index != i) {
-                temp = mas[i];
-                mas[i] = mas[extreme_index];
-                mas[extreme_index] = temp;
+void desc_sort(int *arr, int n, int *swaps) {
+    for (int i = 0; i < n - 1; i++) {
+        int max_pos = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] > arr[max_pos]) {
+                max_pos = j;
             }
         }
-        end = clock();
-        
-        // Сохраняем результат
-        f = fopen("sorted.txt", "w");
-        if(f == NULL) {
-            printf("Не получилось создать файл!\n");
-            free(mas);
-            return 1;
+        if (max_pos != i) {
+            int temp = arr[i];
+            arr[i] = arr[max_pos];
+            arr[max_pos] = temp;
+            (*swaps)++;
         }
-        for(i = 0; i < n; i++) {
-            fprintf(f, "%d\n", mas[i]);
-        }
-        fclose(f);
-        
-        // Выводим информацию
-        printf("\nРезультат:\n");
-        printf("Время сортировки: %.3f сек\n", (double)(end - start) / CLOCKS_PER_SEC);
-        printf("Результат в sorted.txt\n");
-        
-        free(mas);
     }
+}
+
+int verify_asc(int *arr, int n) {
+    for (int i = 0; i < n - 1; i++) {
+        if (arr[i] > arr[i + 1]) return 0;
+    }
+    return 1;
+}
+
+int verify_desc(int *arr, int n) {
+    for (int i = 0; i < n - 1; i++) {
+        if (arr[i] < arr[i + 1]) return 0;
+    }
+    return 1;
+}
+
+void save_results(const char *fname, int *arr, int n) {
+    FILE *fp = fopen(fname, "w");
+    if (!fp) {
+        fprintf(stderr, "Ошибка создания файла %s\n", fname);
+        return;
+    }
+
+    for (int i = 0; i < n; i++) {
+        fprintf(fp, "%d\n", arr[i]);
+    }
+    fclose(fp);
+    printf("Результаты сохранены в %s\n", fname);
+}
+
+void process_sorting(int *data, int count) {
+    int swaps = 0;
+    printf("Выберите тип сортировки:\n");
+    printf("1 - По возрастанию\n");
+    printf("2 - По убыванию\n");
+    printf("Выбор: ");
+    int choice;
+    scanf("%d", &choice);
+    
+    clock_t start = clock();
+    
+    if (choice == 1) {
+        asc_sort(data, count, &swaps);
+    } else if (choice == 2) {
+        desc_sort(data, count, &swaps);
+    } else {
+        printf("Неверный выбор\n");
+        return;
+    }
+    
+    double duration = (double)(clock() - start) / CLOCKS_PER_SEC;
+    printf("Сортировка выполнена за %.4f сек, операций: %d\n", duration, swaps);
+    
+    char out_file[256];
+    printf("Введите имя файла для сохранения: ");
+    scanf("%255s", out_file);
+    save_results(out_file, data, count);
+}
+
+int main() {
+    int *numbers = NULL;
+    int count = 0;
+    int option;
+    
+    do {
+        printf("\nГлавное меню:\n");
+        printf("1. Создать новый файл с числами\n");
+        printf("2. Загрузить и обработать файл\n");
+        printf("0. Выход\n");
+        printf("Выбор: ");
+        scanf("%d", &option);
+        
+        switch (option) {
+            case 1: {
+                char filename[256];
+                int num_count, min_val, max_val;
+                
+                printf("Имя файла: ");
+                scanf("%255s", filename);
+                printf("Количество чисел (макс. %d): ", MAX_SIZE);
+                scanf("%d", &num_count);
+                printf("Минимальное значение: ");
+                scanf("%d", &min_val);
+                printf("Максимальное значение: ");
+                scanf("%d", &max_val);
+                
+                if (num_count > 0 && num_count <= MAX_SIZE) {
+                    create_data_file(filename, num_count, min_val, max_val);
+                } else {
+                    printf("Недопустимое количество\n");
+                }
+                break;
+            }
+            case 2: {
+                char filename[256];
+                printf("Имя файла для обработки: ");
+                scanf("%255s", filename);
+                
+                numbers = load_data(filename, &count);
+                if (numbers && count > 0) {
+                    process_sorting(numbers, count);
+                }
+                break;
+            }
+            case 0:
+                printf("Завершение работы\n");
+                break;
+            default:
+                printf("Неверная команда\n");
+        }
+        
+        if (numbers) {
+            free(numbers);
+            numbers = NULL;
+        }
+    } while (option != 0);
+    
     return 0;
-} 
+}
