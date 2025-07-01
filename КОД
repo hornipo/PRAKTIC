@@ -1,4 +1,3 @@
-илюха Кент, [01.07.2025 12:11]
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -128,8 +127,6 @@ int main() {
                 temp = mas[i];
                 mas[i] = mas[extreme_index];
                 mas[extreme_index] = temp;
-
-илюха Кент, [01.07.2025 12:11]
 }
             
             #if DEBUG
