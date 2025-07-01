@@ -37,8 +37,7 @@ int main() {
         int *mas = NULL;
         int n, a, b, i, j, temp, choice;
         clock_t start, end;
-        
-        printf("Программа для сортировки случайных чисел\n\n");
+         
         printf("Нажмите ESC для выхода или любую другую клавишу для продолжения...\n");
         
         if(getch() == 27) {
