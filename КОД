@@ -3,6 +3,7 @@
 #include <time.h>
 #include <conio.h>
 #include <assert.h>
+#include <ctype.h> // Для isdigit()
 
 #define DEBUG 1 // Включение режима отладки (1 - вкл, 0 - выкл)
 #define LOG_FILE "debug.log"
@@ -29,6 +30,35 @@ void print_array(int* arr, int size, const char* label) {
     #endif
 }
 
+// Функция для безопасного ввода целого числа
+int input_int(const char* prompt) {
+    char buffer[100];
+    int value;
+    int success;
+    
+    while (1) {
+        printf("%s", prompt);
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            // Ошибка ввода или EOF
+            continue;
+        }
+        
+        // Проверяем, что вся строка состоит из цифр, возможно с начальным +/-
+        char* endptr;
+        value = strtol(buffer, &endptr, 10);
+        
+        // Проверяем, что преобразование прошло успешно и нет мусора после числа
+        if (endptr != buffer && (*endptr == '\0' || *endptr == '\n')) {
+            return value;
+        }
+        
+        printf("Ошибка! Введите целое число.\n");
+        char error_msg[150];
+        sprintf(error_msg, "Неверный ввод: '%s'", buffer);
+        log_message(error_msg);
+    }
+}
+
 int main() {
     log_message("Программа запущена");
     
@@ -37,7 +67,8 @@ int main() {
         int *mas = NULL;
         int n, a, b, i, j, temp, choice;
         clock_t start, end;
-         
+        
+        printf("Программа для сортировки случайных чисел\n\n");
         printf("Нажмите ESC для выхода или любую другую клавишу для продолжения...\n");
         
         if(getch() == 27) {
@@ -47,10 +78,10 @@ int main() {
         }
         
         // Ввод количества элементов
-        printf("\nСколько чисел сгенерировать? ");
-        while(scanf("%d", &n) != 1  n <= 0) {
-            printf("Ошибка! Введите целое число больше нуля: ");
-            while(getchar() != '\n');
+        n = input_int("\nСколько чисел сгенерировать? ");
+        while (n <= 0) {
+            printf("Ошибка! Введите число больше нуля: ");
+            n = input_int("");
             log_message("Неверный ввод количества чисел");
         }
         
@@ -60,23 +91,13 @@ int main() {
         log_message("Память успешно выделена");
         
         // Ввод диапазона чисел
-        printf("Минимальное число: ");
-        while(scanf("%d", &a) != 1) {
-            printf("Ошибка! Введите целое число: ");
-            while(getchar() != '\n');
-            log_message("Неверный ввод минимального числа");
-        }
+        a = input_int("Минимальное число: ");
         
-        printf("Максимальное число: ");
-        while(scanf("%d", &b) != 1  b < a) {
-            if(b < a) {
-                printf("Максимум должен быть больше минимума! Введите снова: ");
-                log_message("Максимум меньше минимума");
-            } else {
-                printf("Ошибка! Введите целое число: ");
-                log_message("Неверный ввод максимального числа");
-            }
-            while(getchar() != '\n');
+        b = input_int("Максимальное число: ");
+        while (b < a) {
+            printf("Максимум должен быть больше минимума! Введите снова: ");
+            b = input_int("");
+            log_message("Максимум меньше минимума");
         }
         
         // Генерация случайных чисел
@@ -101,10 +122,11 @@ int main() {
         printf("\nКак сортировать?\n");
         printf("1 - По возрастанию\n");
         printf("2 - По убыванию\n");
-        printf("Ваш выбор: ");
-        while(scanf("%d", &choice) != 1  (choice != 1 && choice != 2)) {
+        
+        choice = input_int("Ваш выбор: ");
+        while (choice != 1 && choice != 2) {
             printf("Ошибка! Введите 1 или 2: ");
-            while(getchar() != '\n');
+            choice = input_int("");
             log_message("Неверный выбор сортировки");
         }
         
@@ -116,7 +138,7 @@ int main() {
             int extreme_index = i;
             
             for(j = i + 1; j < n; j++) {
-                if((choice == 1 && mas[j] < mas[extreme_index])  
+                if((choice == 1 && mas[j] < mas[extreme_index]) || 
                    (choice == 2 && mas[j] > mas[extreme_index])) {
                     extreme_index = j;
                 }
@@ -126,7 +148,7 @@ int main() {
                 temp = mas[i];
                 mas[i] = mas[extreme_index];
                 mas[extreme_index] = temp;
-}
+            }
             
             #if DEBUG
             if (i % 100 == 0) { // Вывод каждые 100 итераций
@@ -165,4 +187,4 @@ int main() {
     
     log_message("Программа завершена");
     return 0;
-}
+} 
