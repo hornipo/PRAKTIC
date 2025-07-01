@@ -2,138 +2,103 @@
 #include <stdlib.h>
 #include <time.h>
 #include <conio.h>
-#include <assert.h>
-#include <ctype.h>  
-
-#define DEBUG 1  
-#define LOG_FILE "debug.log"
-
-// Функция для логирования в файл
-void log_message(const char* message) {
-    FILE* log = fopen(LOG_FILE, "a");
-    if (log) {
-        time_t now;
-        time(&now);
-        fprintf(log, "[%s] %s\n", ctime(&now), message);
-        fclose(log);
-    }
-}
-
-// Функция вывода массива (для отладки)
-void print_array(int* arr, int size, const char* label) {
-    #if DEBUG
-    printf("%s: ", label);
-    for (int i = 0; i < size; i++) {
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-    #endif
-}
+#include <string.h>  
 
 // Функция для безопасного ввода целого числа
 int input_int(const char* prompt) {
-    char buffer[100];
     int value;
-    int success;
+    char buffer[100];
     
-    while (1) {
+    while(1) {
         printf("%s", prompt);
-        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
-            
+        if(fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            printf("Ошибка ввода!\n");
             continue;
         }
         
-        // Проверяем, что вся строка состоит из цифр, возможно с начальным +/-
-        char* endptr;
-        value = strtol(buffer, &endptr, 10);
-        
-        // Проверяем, что преобразование прошло успешно и нет мусора после числа
-        if (endptr != buffer && (*endptr == '\0' || *endptr == '\n')) {
-            return value;
+        // Проверяем, что введено целое число и нет мусора после числа
+        if(sscanf(buffer, "%d", &value) == 1) {
+            // Проверяем, что в строке нет других символов кроме числа
+            char *endptr;
+            strtol(buffer, &endptr, 10);
+            if(*endptr == '\n' || *endptr == '\0') {
+                return value;
+            }
         }
         
-        printf("Ошибка! Введите целое число.\n");
-        char error_msg[150];
-        sprintf(error_msg, "Неверный ввод: '%s'", buffer);
-        log_message(error_msg);
+        printf("Ошибка! Введите целое число: ");
     }
 }
 
 int main() {
-    log_message("Программа запущена");
-    
     while(1) {
         FILE *f;
         int *mas = NULL;
         int n, a, b, i, j, temp, choice;
         clock_t start, end;
         
-        printf("Программа для сортировки случайных чисел\n\n");
-        printf("Нажмите ESC для выхода или любую другую клавишу для продолжения...\n");
+        printf("\n\nНажмите ESC для выхода или любую другую клавишу для продолжения...\n");
         
+        // Проверка нажатия ESC
         if(getch() == 27) {
-            log_message("Пользователь выбрал выход");
             printf("\nВыход из программы...\n");
             break;
         }
         
-        // Ввод количества элементов
+        // Ввод количества чисел с проверкой
         n = input_int("\nСколько чисел сгенерировать? ");
-        while (n <= 0) {
-            printf("Ошибка! Введите число больше нуля: ");
-            n = input_int("");
-            log_message("Неверный ввод количества чисел");
+        while(n <= 0) {
+            printf("Число должно быть больше нуля! ");
+            n = input_int("Попробуйте снова: ");
         }
         
-        // Выделение памяти с проверкой
         mas = (int*)malloc(n * sizeof(int));
-        assert(mas != NULL && "Ошибка выделения памяти");
-        log_message("Память успешно выделена");
+        if(mas == NULL) {
+            printf("Не хватило памяти!\n");
+            return 1;
+        }
         
-        // Ввод диапазона чисел
+        // Вводим диапазон с проверками
         a = input_int("Минимальное число: ");
         
         b = input_int("Максимальное число: ");
-        while (b < a) {
-            printf("Максимум должен быть больше минимума! Введите снова: ");
-            b = input_int("");
-            log_message("Максимум меньше минимума");
+        while(b < a) {
+            printf("Максимум должен быть больше минимума! ");
+            b = input_int("Введите снова: ");
         }
         
-        // Генерация случайных чисел
+        // Генерируем числа
         srand(time(0));
         for(i = 0; i < n; i++) {
             mas[i] = rand() % (b - a + 1) + a;
         }
-        print_array(mas, n, "Несортированный массив");
-        log_message("Массив сгенерирован");
         
-        // Запись в файл
+        // Сохраняем несортированный массив
         f = fopen("unsorted.txt", "w");
-        assert(f != NULL && "Ошибка открытия файла");
+        if(f == NULL) {
+            printf("Не получилось создать файл!\n");
+            free(mas);
+            return 1;
+        }
         for(i = 0; i < n; i++) {
             fprintf(f, "%d\n", mas[i]);
         }
         fclose(f);
         printf("Числа записаны в unsorted.txt\n");
-        log_message("Несортированные данные записаны в файл");
         
-        // Выбор сортировки
+        // Выбираем сортировку с проверкой
         printf("\nКак сортировать?\n");
         printf("1 - По возрастанию\n");
         printf("2 - По убыванию\n");
         
         choice = input_int("Ваш выбор: ");
-        while (choice != 1 && choice != 2) {
+        while(choice != 1 && choice != 2) {
             printf("Ошибка! Введите 1 или 2: ");
             choice = input_int("");
-            log_message("Неверный выбор сортировки");
         }
         
-        // Сортировка с замером времени
-        log_message("Начало сортировки");
+        // Сортировка выбором
         start = clock();
-        
         for(i = 0; i < n - 1; i++) {
             int extreme_index = i;
             
@@ -149,42 +114,27 @@ int main() {
                 mas[i] = mas[extreme_index];
                 mas[extreme_index] = temp;
             }
-            
-            #if DEBUG
-            if (i % 100 == 0) { // Вывод каждые 100 итераций
-                printf("Отладка: итерация %d\n", i);
-                print_array(mas, n, "Промежуточный массив");
-            }
-            #endif
         }
-        
         end = clock();
-        double sort_time = (double)(end - start) / CLOCKS_PER_SEC;
-        printf("\nРезультат:\n");
-        printf("Время сортировки: %.3f сек\n", sort_time);
         
-        char time_msg[100];
-        sprintf(time_msg, "Сортировка завершена за %.3f секунд", sort_time);
-        log_message(time_msg);
-        
-        // Запись отсортированного массива
+        // Сохраняем результат
         f = fopen("sorted.txt", "w");
-        assert(f != NULL && "Ошибка открытия файла");
+        if(f == NULL) {
+            printf("Не получилось создать файл!\n");
+            free(mas);
+            return 1;
+        }
         for(i = 0; i < n; i++) {
             fprintf(f, "%d\n", mas[i]);
         }
         fclose(f);
-        printf("Результат в sorted.txt\n");
-        log_message("Отсортированные данные записаны в файл");
         
-        print_array(mas, n, "Отсортированный массив");
+        // Выводим информацию
+        printf("\nРезультат:\n");
+        printf("Время сортировки: %.3f сек\n", (double)(end - start) / CLOCKS_PER_SEC);
+        printf("Результат в sorted.txt\n");
         
         free(mas);
-        log_message("Память освобождена");
-        
-        while(getchar() != '\n');
     }
-    
-    log_message("Программа завершена");
     return 0;
 } 
