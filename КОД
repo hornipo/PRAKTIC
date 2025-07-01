@@ -3,9 +3,9 @@
 #include <time.h>
 #include <conio.h>
 #include <assert.h>
-#include <ctype.h> // Для isdigit()
+#include <ctype.h>  
 
-#define DEBUG 1 // Включение режима отладки (1 - вкл, 0 - выкл)
+#define DEBUG 1  
 #define LOG_FILE "debug.log"
 
 // Функция для логирования в файл
@@ -39,7 +39,7 @@ int input_int(const char* prompt) {
     while (1) {
         printf("%s", prompt);
         if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
-            // Ошибка ввода или EOF
+            
             continue;
         }
         
