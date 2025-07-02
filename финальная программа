@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_SIZE 500000  // Уменьшено с 1,000,000 до 500,000
+#define MAX_SIZE 500000
 
+// Функция для создания файла со случайными числами
 void create_data_file(const char *fname, int elements, int low, int high) {
     FILE *fp = fopen(fname, "w");
     if (!fp) {
@@ -20,6 +21,7 @@ void create_data_file(const char *fname, int elements, int low, int high) {
     printf("Создан файл %s с %d числами от %d до %d\n", fname, elements, low, high);
 }
 
+// Функция для загрузки данных из файла в массив
 int* load_data(const char *fname, int *elements_count) {
     FILE *fp = fopen(fname, "r");
     if (!fp) {
@@ -42,6 +44,7 @@ int* load_data(const char *fname, int *elements_count) {
     return data;
 }
 
+// Функция сортировки по возрастанию (метод выбора)
 void asc_sort(int *arr, int n, int *swaps) {
     for (int i = 0; i < n - 1; i++) {
         int min_pos = i;
@@ -59,6 +62,7 @@ void asc_sort(int *arr, int n, int *swaps) {
     }
 }
 
+// Функция сортировки по убыванию (метод выбора)
 void desc_sort(int *arr, int n, int *swaps) {
     for (int i = 0; i < n - 1; i++) {
         int max_pos = i;
@@ -76,6 +80,7 @@ void desc_sort(int *arr, int n, int *swaps) {
     }
 }
 
+// Функция проверки сортировки по возрастанию
 int verify_asc(int *arr, int n) {
     for (int i = 0; i < n - 1; i++) {
         if (arr[i] > arr[i + 1]) return 0;
@@ -83,6 +88,7 @@ int verify_asc(int *arr, int n) {
     return 1;
 }
 
+// Функция проверки сортировки по убыванию
 int verify_desc(int *arr, int n) {
     for (int i = 0; i < n - 1; i++) {
         if (arr[i] < arr[i + 1]) return 0;
@@ -90,6 +96,7 @@ int verify_desc(int *arr, int n) {
     return 1;
 }
 
+// Функция сохранения результатов в файл
 void save_results(const char *fname, int *arr, int n) {
     FILE *fp = fopen(fname, "w");
     if (!fp) {
@@ -104,6 +111,7 @@ void save_results(const char *fname, int *arr, int n) {
     printf("Результаты сохранены в %s\n", fname);
 }
 
+// Основная функция обработки сортировки
 void process_sorting(int *data, int count) {
     int swaps = 0;
     printf("Выберите тип сортировки:\n");
@@ -133,8 +141,9 @@ void process_sorting(int *data, int count) {
     save_results(out_file, data, count);
 }
 
+// Главная функция с основным меню программы
 int main() {
-    int *numbers = NULL;
+    int *numbers = 0;
     int count = 0;
     int option;
     
